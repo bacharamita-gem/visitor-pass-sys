@@ -309,11 +309,28 @@
       overflow: hidden;
     }
     
+    .camera-header {
+      background: #2c3e50;
+      color: white;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
     #cameraView {
       width: 100%;
       height: 400px;
       background: #000;
       display: block;
+    }
+    
+    .camera-controls {
+      padding: 15px;
+      background: #f8f9fa;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
     }
     
     .stats-info {
@@ -338,27 +355,6 @@
     .stat-label {
       font-size: 12px;
       color: rgba(255,255,255,0.9);
-    }
-    
-    .url-display {
-      background: #e8f4fd;
-      padding: 10px;
-      border-radius: 5px;
-      margin: 10px 0;
-      word-break: break-all;
-      font-size: 12px;
-      text-align: left;
-    }
-    
-    .copy-btn {
-      background: #3498db;
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 3px;
-      cursor: pointer;
-      font-size: 11px;
-      margin-top: 5px;
     }
   </style>
 </head>
@@ -482,14 +478,14 @@
       <!-- Camera Modal -->
       <div class="camera-modal" id="cameraModal">
         <div class="camera-container">
-          <div class="camera-header" style="background:#2c3e50;color:white;padding:15px;display:flex;justify-content:space-between;">
+          <div class="camera-header">
             <span><i class="fas fa-camera"></i> Take Photo</span>
             <button onclick="closeCamera()" style="background:none;border:none;color:white;cursor:pointer;font-size:20px;">
               <i class="fas fa-times"></i>
             </button>
           </div>
-          <video id="cameraView" autoplay playsinline style="width:100%;height:400px;background:#000;"></video>
-          <div class="camera-controls" style="padding:15px;background:#f8f9fa;display:flex;gap:10px;justify-content:center;">
+          <video id="cameraView" autoplay playsinline></video>
+          <div class="camera-controls">
             <button class="camera-btn btn-primary" onclick="capturePhoto()">
               <i class="fas fa-camera"></i> Capture
             </button>
@@ -518,7 +514,7 @@
   
   <script>
     // ================================================
-    // CONFIGURATION - UPDATE THIS WITH YOUR APPS SCRIPT URL
+    // CONFIGURATION
     // ================================================
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxaq-JRSudrABpbEC-ez2y6eD92Pc8qfAz7ol6KL414NZjnyMZAw0H1924LffrGOpcu/exec';
     
@@ -526,6 +522,7 @@
     let photoBase64 = '';
     let cameraStream = null;
     let currentPurpose = '';
+    let visitorIdFromServer = ''; // Store the actual visitor ID
     const { jsPDF } = window.jspdf;
     
     // ================================================
@@ -552,17 +549,14 @@
     });
     
     // ================================================
-    // API CALLS
+    // LOAD STATS
     // ================================================
     
     async function loadSystemStats() {
       try {
         const response = await fetch(`${APPS_SCRIPT_URL}?action=checkSystemStatus`, {
           method: 'GET',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'text/plain',
-          }
+          mode: 'cors'
         });
         
         if (response.ok) {
@@ -570,10 +564,14 @@
           console.log('Stats loaded:', result);
           
           if (result.success) {
-            document.getElementById('nextVisitorId').textContent = result.nextVisitorId;
-            document.getElementById('todayCount').textContent = result.todayStats.totalToday;
-            document.getElementById('totalCount').textContent = result.sheetRows;
-            document.getElementById('activeCount').textContent = result.activeCount;
+            // Store the actual visitor ID from server
+            visitorIdFromServer = result.nextVisitorId;
+            
+            // Update display
+            document.getElementById('nextVisitorId').textContent = visitorIdFromServer;
+            document.getElementById('todayCount').textContent = result.todayStats?.totalToday || 0;
+            document.getElementById('totalCount').textContent = result.sheetRows || 0;
+            document.getElementById('activeCount').textContent = result.activeCount || 0;
           } else {
             setDefaultVisitorId();
           }
@@ -591,16 +589,18 @@
       const dd = String(today.getDate()).padStart(2, '0');
       const mm = String(today.getMonth() + 1).padStart(2, '0');
       const yy = String(today.getFullYear()).slice(2);
-      const defaultId = 'GD' + dd + mm + yy + '001';
-      document.getElementById('nextVisitorId').textContent = defaultId;
+      visitorIdFromServer = 'GD' + dd + mm + yy + '001';
+      document.getElementById('nextVisitorId').textContent = visitorIdFromServer;
     }
+    
+    // ================================================
+    // SUBMIT FORM
+    // ================================================
     
     async function submitForm() {
       const validation = validateForm();
       
       if (!validation.isValid) {
-        const errorMessage = validation.errors.join('<br>');
-        showMessage(`<i class="fas fa-exclamation-circle"></i> Please fix the following errors:<br>${errorMessage}`, 'error');
         return;
       }
       
@@ -622,63 +622,144 @@
       document.getElementById('message').style.display = 'none';
       
       try {
-        // Send to Apps Script using no-cors mode to avoid preflight
-        await fetch(APPS_SCRIPT_URL, {
+        // Send to Apps Script
+        const response = await fetch(APPS_SCRIPT_URL, {
           method: 'POST',
           mode: 'no-cors',
           headers: {
-            'Content-Type': 'text/plain;charset=utf-8',
+            'Content-Type': 'application/json',
           },
-          body: JSON.stringify(formData)
+          body: JSON.stringify({
+            action: 'processForm',
+            ...formData
+          })
         });
         
-        // Generate visitor ID locally
-        const visitorId = generateLocalVisitorId();
+        // Get current date and time
         const now = new Date();
-        const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
+        const dateStr = now.toLocaleDateString('en-GB');
         const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         
-        // Generate PDF with local data
+        // Generate PDF with the ACTUAL visitor ID from server
         await generateAndDownloadPDF(formData, {
-          visitorId: visitorId,
+          visitorId: visitorIdFromServer, // Use the stored ID from server
           date: dateStr,
-          time: timeStr,
-          photoDriveUrl: ''
+          time: timeStr
+        });
+        
+        showSuccessMessage(formData, visitorIdFromServer, dateStr, timeStr);
+        
+        // Update visitor ID for next submission
+        setTimeout(loadSystemStats, 2000);
+        
+      } catch (error) {
+        console.error('Submission error:', error);
+        
+        // Even if fetch fails, generate PDF with the current visitor ID
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-GB');
+        const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        
+        await generateAndDownloadPDF(formData, {
+          visitorId: visitorIdFromServer,
+          date: dateStr,
+          time: timeStr
         });
         
         showMessage(`
           <div style="text-align:center;">
-            <h3 style="color:#27ae60;">✓ Visitor Pass Created Successfully!</h3>
+            <h3 style="color:#f39c12;">⚠ Visitor Pass Created</h3>
             <div style="background:#e8f4fd; padding:15px; margin:15px 0;">
               <div style="font-size:14px;">Visitor ID</div>
-              <div style="font-size:28px; font-weight:bold;">${visitorId}</div>
+              <div style="font-size:28px; font-weight:bold;">${visitorIdFromServer}</div>
               <div>${formData.visitorName} | ${dateStr} ${timeStr}</div>
             </div>
-            <p>Data will appear in Google Sheets shortly.</p>
+            <p>Data will sync to Google Sheets when connection is restored.</p>
             <button onclick="clearForm()" style="background:#2ecc71;color:white;padding:12px 30px;border:none;border-radius:5px;cursor:pointer;margin-top:15px;">
               Create Another Pass
             </button>
           </div>
         `, 'success');
-        
-        // Update stats
-        document.getElementById('nextVisitorId').textContent = generateLocalVisitorId();
-        
-      } catch (error) {
-        console.error('Submission error:', error);
-        showMessage('Connection error. Please try again. Your data will be saved when connection is restored.', 'error');
       } finally {
         document.getElementById('loading').style.display = 'none';
         document.getElementById('submitBtn').disabled = false;
       }
     }
     
-    function generateLocalVisitorId() {
-      const now = new Date();
-      const dd = String(now.getDate()).padStart(2, '0');
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const yy = String(now.getFullYear()).slice(2);
-      return 'GD' + dd + mm + yy + '001';
+    function showSuccessMessage(formData, visitorId, dateStr, timeStr) {
+      const messageHTML = `
+        <div style="text-align:center;">
+          <h3 style="color:#27ae60;">✓ Visitor Pass Created Successfully!</h3>
+          <div style="background:#e8f4fd; padding:15px; margin:15px 0;">
+            <div style="font-size:14px;">Visitor ID</div>
+            <div style="font-size:28px; font-weight:bold;">${visitorId}</div>
+            <div>${formData.visitorName} | ${dateStr} ${timeStr}</div>
+          </div>
+          <p>Data has been saved to Google Sheets.</p>
+          <button onclick="clearForm()" style="background:#2ecc71;color:white;padding:12px 30px;border:none;border-radius:5px;cursor:pointer;margin-top:15px;">
+            Create Another Pass
+          </button>
+        </div>
+      `;
+      
+      showMessage(messageHTML, 'success');
+    }
+    
+    // ================================================
+    // VALIDATION
+    // ================================================
+    
+    function validateForm() {
+      let isValid = true;
+      const errors = [];
+      
+      const requiredFields = [
+        { id: 'visitorName', name: 'Visitor Name' },
+        { id: 'companyName', name: 'Company Name' },
+        { id: 'contactNumber', name: 'Contact Number' },
+        { id: 'personToMeet', name: 'Person to Meet' },
+        { id: 'areaToVisit', name: 'Area to Visit' },
+        { id: 'purpose', name: 'Purpose' }
+      ];
+      
+      requiredFields.forEach(field => {
+        const element = document.getElementById(field.id);
+        const value = element.value.trim();
+        
+        if (!value) {
+          isValid = false;
+          element.classList.add('error-field');
+          errors.push(`${field.name} is required`);
+        } else {
+          element.classList.remove('error-field');
+        }
+      });
+      
+      const phone = document.getElementById('contactNumber').value.trim();
+      if (phone && !/^[0-9]{10}$/.test(phone)) {
+        document.getElementById('contactNumber').classList.add('error-field');
+        isValid = false;
+        errors.push('Contact number must be exactly 10 digits');
+      }
+      
+      const purpose = document.getElementById('purpose').value;
+      if (purpose === 'Other') {
+        const details = document.getElementById('purposeDetails').value.trim();
+        if (!details) {
+          document.getElementById('purposeDetails').classList.add('error-field');
+          isValid = false;
+          errors.push('Please specify purpose details');
+        }
+        currentPurpose = details || 'Other';
+      } else {
+        currentPurpose = purpose;
+      }
+      
+      if (!isValid) {
+        showMessage(`<i class="fas fa-exclamation-circle"></i> Please fix the following errors:<br>${errors.join('<br>')}`, 'error');
+      }
+      
+      return isValid;
     }
     
     // ================================================
@@ -791,280 +872,209 @@
     }
     
     // ================================================
-    // FORM VALIDATION
+    // PDF GENERATION - FIXED TO SHOW CORRECT VISITOR ID
     // ================================================
-    
-    function validateForm() {
-      let isValid = true;
-      const errors = [];
-      
-      const requiredFields = [
-        { id: 'visitorName', name: 'Visitor Name' },
-        { id: 'companyName', name: 'Company Name' },
-        { id: 'contactNumber', name: 'Contact Number' },
-        { id: 'personToMeet', name: 'Person to Meet' },
-        { id: 'areaToVisit', name: 'Area to Visit' },
-        { id: 'purpose', name: 'Purpose' }
-      ];
-      
-      requiredFields.forEach(field => {
-        const element = document.getElementById(field.id);
-        const value = element.value.trim();
-        
-        if (!value) {
-          isValid = false;
-          element.classList.add('error-field');
-          errors.push(`${field.name} is required`);
-        } else {
-          element.classList.remove('error-field');
-        }
-      });
-      
-      const phone = document.getElementById('contactNumber').value.trim();
-      if (phone && !/^[0-9]{10}$/.test(phone)) {
-        document.getElementById('contactNumber').classList.add('error-field');
-        isValid = false;
-        errors.push('Contact number must be exactly 10 digits');
-      }
-      
-      const purpose = document.getElementById('purpose').value;
-      if (purpose === 'Other') {
-        const details = document.getElementById('purposeDetails').value.trim();
-        currentPurpose = details || 'Other';
-      } else {
-        currentPurpose = purpose;
-      }
-      
-      return { isValid, errors };
-    }
-    
-// ================================================
-// PDF GENERATION - FIXED TO SHOW CORRECT VISITOR ID
-// ================================================
 
-async function generateAndDownloadPDF(formData, resultData) {
-  return new Promise((resolve) => {
-    try {
-      const doc = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: [148, 105]
-      });
-      
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      
-      // Set margins
-      const margin = 8;
-      const contentWidth = pageWidth - (margin * 2);
-      
-      const leftSectionWidth = contentWidth * 0.58;
-      const rightSectionWidth = contentWidth * 0.42;
-      const rightSectionStart = margin + leftSectionWidth + 5;
-      
-      let currentY = margin + 5;
-      
-      // Border
-      doc.setDrawColor(0, 0, 0);
-      doc.setLineWidth(0.7);
-      doc.rect(4, 4, pageWidth - 13, pageHeight - 8);
-      
-      // Header Section
-      doc.setFontSize(8.5);
-      doc.setFont('helvetica', 'bold');
-      doc.text('GEM DRYTECH SYSTEMS LLP', margin + leftSectionWidth/2, currentY, { align: 'center' });
-      currentY += 4;
-      
-      doc.setFontSize(10);
-      doc.setTextColor(231, 76, 60);
-      doc.text('VISITOR PASS', margin + leftSectionWidth/2, currentY, { align: 'center' });
-      doc.setTextColor(0, 0, 0);
-      currentY += 6;
-      
-      // ============================================
-      // FIXED: Use the ACTUAL visitor ID from Google Sheets
-      // ============================================
-      // Get the visitor ID from the display (which now has the real ID from server)
-      const actualVisitorId = document.getElementById('nextVisitorId').textContent;
-      
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Visitor ID:', margin + leftSectionWidth/2 - 15, currentY);
-      doc.setTextColor(52, 152, 219);
-      doc.text(actualVisitorId, margin + leftSectionWidth/2 + 5, currentY);
-      doc.setTextColor(0, 0, 0);
-      currentY += 8;
-      
-      // Separator line
-      doc.setLineWidth(0.3);
-      doc.line(margin, currentY, margin + leftSectionWidth - 6, currentY);
-      currentY += 7;
-      
-      // Left Section: Visitor Details
-      const leftColumnX = margin + 5;
-      const valueColumnX = leftColumnX + 30;
-      
-      doc.setFontSize(7.5);
-      
-      // Visitor Name
-      doc.setFont('helvetica', 'bold');
-      doc.text('Visitor Name:', leftColumnX, currentY);
-      doc.setFont('helvetica', 'normal');
-      doc.text(formData.visitorName.substring(0, 25), valueColumnX, currentY);
-      currentY += 4;
-      
-      // Company Name
-      doc.setFont('helvetica', 'bold');
-      doc.text('Company:', leftColumnX, currentY);
-      doc.setFont('helvetica', 'normal');
-      doc.text(formData.companyName.substring(0, 25), valueColumnX, currentY);
-      currentY += 4;
-      
-      // Contact Number
-      doc.setFont('helvetica', 'bold');
-      doc.text('Contact No:', leftColumnX, currentY);
-      doc.setFont('helvetica', 'normal');
-      doc.text(formData.contactNumber, valueColumnX, currentY);
-      currentY += 4;
-      
-      // Address (if provided)
-      if (formData.visitorAddress) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('Address:', leftColumnX, currentY);
-        doc.setFont('helvetica', 'normal');
-        
-        const maxAddressWidth = leftSectionWidth - 35;
-        const addressLines = doc.splitTextToSize(formData.visitorAddress, maxAddressWidth);
-        
-        const displayLines = addressLines.slice(0, 2);
-        doc.text(displayLines, valueColumnX, currentY);
-        currentY += (displayLines.length * 3.5);
-      }
-      
-      // Person to Meet
-      doc.setFont('helvetica', 'bold');
-      doc.text('Meeting With:', leftColumnX, currentY);
-      doc.setFont('helvetica', 'normal');
-      doc.text(formData.personToMeet.substring(0, 25), valueColumnX, currentY);
-      currentY += 4;
-      
-      // Area to Visit
-      doc.setFont('helvetica', 'bold');
-      doc.text('Area to Visit:', leftColumnX, currentY);
-      doc.setFont('helvetica', 'normal');
-      doc.text(formData.areaToVisit.substring(0, 25), valueColumnX, currentY);
-      currentY += 4;
-      
-      // Purpose
-      doc.setFont('helvetica', 'bold');
-      doc.text('Purpose:', leftColumnX, currentY);
-      doc.setFont('helvetica', 'normal');
-      
-      const maxPurposeWidth = leftSectionWidth - 35;
-      const purposeLines = doc.splitTextToSize(formData.purpose, maxPurposeWidth);
-      
-      const purposeDisplayLines = purposeLines.slice(0, 2);
-      doc.text(purposeDisplayLines, valueColumnX, currentY);
-      currentY += (purposeDisplayLines.length * 3.5);
-      
-      // Date
-      doc.setFont('helvetica', 'bold');
-      doc.text('Date:', leftColumnX, currentY);
-      doc.setFont('helvetica', 'normal');
-      doc.text(resultData.date, valueColumnX, currentY);
-      currentY += 4;
-      
-      // Time
-      doc.setFont('helvetica', 'bold');
-      doc.text('Time:', leftColumnX, currentY);
-      doc.setFont('helvetica', 'normal');
-      doc.text(resultData.time, valueColumnX, currentY);
-      currentY += 8;
-      
-      // ============================================
-      // PHOTO SECTION
-      // ============================================
-      const photoStartY = margin + 22;  // MOVED DOWN FROM 12 TO 22
-      
-      const photoBoxX = rightSectionStart;
-      const photoBoxWidth = rightSectionWidth - 8;
-      const photoBoxHeight = 40;
-      
-      doc.setDrawColor(0, 0, 0);
-      doc.setLineWidth(0.5);
-      doc.rect(photoBoxX, photoStartY, photoBoxWidth, photoBoxHeight);
-      
-      if (formData.photo && formData.photo !== '') {
+    async function generateAndDownloadPDF(formData, resultData) {
+      return new Promise((resolve) => {
         try {
-          doc.addImage(formData.photo, 'JPEG', 
-                       photoBoxX + 2, photoStartY + 2, 
-                       photoBoxWidth - 4, photoBoxHeight - 4);
+          const doc = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: [148, 105]
+          });
+          
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const pageHeight = doc.internal.pageSize.getHeight();
+          
+          const margin = 8;
+          const contentWidth = pageWidth - (margin * 2);
+          
+          const leftSectionWidth = contentWidth * 0.58;
+          const rightSectionWidth = contentWidth * 0.42;
+          const rightSectionStart = margin + leftSectionWidth + 5;
+          
+          let currentY = margin + 5;
+          
+          // Border
+          doc.setDrawColor(0, 0, 0);
+          doc.setLineWidth(0.7);
+          doc.rect(4, 4, pageWidth - 13, pageHeight - 8);
+          
+          // Header
+          doc.setFontSize(8.5);
+          doc.setFont('helvetica', 'bold');
+          doc.text('GEM DRYTECH SYSTEMS LLP', margin + leftSectionWidth/2, currentY, { align: 'center' });
+          currentY += 4;
+          
+          doc.setFontSize(10);
+          doc.setTextColor(231, 76, 60);
+          doc.text('VISITOR PASS', margin + leftSectionWidth/2, currentY, { align: 'center' });
+          doc.setTextColor(0, 0, 0);
+          currentY += 6;
+          
+          // Visitor ID - USING THE CORRECT ID FROM SERVER
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Visitor ID:', margin + leftSectionWidth/2 - 15, currentY);
+          doc.setTextColor(52, 152, 219);
+          doc.text(resultData.visitorId, margin + leftSectionWidth/2 + 5, currentY);
+          doc.setTextColor(0, 0, 0);
+          currentY += 8;
+          
+          // Separator
+          doc.setLineWidth(0.3);
+          doc.line(margin, currentY, margin + leftSectionWidth - 6, currentY);
+          currentY += 7;
+          
+          // Visitor Details
+          const leftColumnX = margin + 5;
+          const valueColumnX = leftColumnX + 30;
+          
+          doc.setFontSize(7.5);
+          
+          // Name
+          doc.setFont('helvetica', 'bold');
+          doc.text('Visitor Name:', leftColumnX, currentY);
+          doc.setFont('helvetica', 'normal');
+          doc.text(formData.visitorName.substring(0, 25), valueColumnX, currentY);
+          currentY += 4;
+          
+          // Company
+          doc.setFont('helvetica', 'bold');
+          doc.text('Company:', leftColumnX, currentY);
+          doc.setFont('helvetica', 'normal');
+          doc.text(formData.companyName.substring(0, 25), valueColumnX, currentY);
+          currentY += 4;
+          
+          // Contact
+          doc.setFont('helvetica', 'bold');
+          doc.text('Contact No:', leftColumnX, currentY);
+          doc.setFont('helvetica', 'normal');
+          doc.text(formData.contactNumber, valueColumnX, currentY);
+          currentY += 4;
+          
+          // Address
+          if (formData.visitorAddress) {
+            doc.setFont('helvetica', 'bold');
+            doc.text('Address:', leftColumnX, currentY);
+            doc.setFont('helvetica', 'normal');
+            
+            const maxAddressWidth = leftSectionWidth - 35;
+            const addressLines = doc.splitTextToSize(formData.visitorAddress, maxAddressWidth);
+            doc.text(addressLines.slice(0, 2), valueColumnX, currentY);
+            currentY += (addressLines.slice(0, 2).length * 3.5);
+          }
+          
+          // Person to Meet
+          doc.setFont('helvetica', 'bold');
+          doc.text('Meeting With:', leftColumnX, currentY);
+          doc.setFont('helvetica', 'normal');
+          doc.text(formData.personToMeet.substring(0, 25), valueColumnX, currentY);
+          currentY += 4;
+          
+          // Area
+          doc.setFont('helvetica', 'bold');
+          doc.text('Area to Visit:', leftColumnX, currentY);
+          doc.setFont('helvetica', 'normal');
+          doc.text(formData.areaToVisit.substring(0, 25), valueColumnX, currentY);
+          currentY += 4;
+          
+          // Purpose
+          doc.setFont('helvetica', 'bold');
+          doc.text('Purpose:', leftColumnX, currentY);
+          doc.setFont('helvetica', 'normal');
+          
+          const maxPurposeWidth = leftSectionWidth - 35;
+          const purposeLines = doc.splitTextToSize(formData.purpose, maxPurposeWidth);
+          doc.text(purposeLines.slice(0, 2), valueColumnX, currentY);
+          currentY += (purposeLines.slice(0, 2).length * 3.5);
+          
+          // Date
+          doc.setFont('helvetica', 'bold');
+          doc.text('Date:', leftColumnX, currentY);
+          doc.setFont('helvetica', 'normal');
+          doc.text(resultData.date, valueColumnX, currentY);
+          currentY += 4;
+          
+          // Time
+          doc.setFont('helvetica', 'bold');
+          doc.text('Time:', leftColumnX, currentY);
+          doc.setFont('helvetica', 'normal');
+          doc.text(resultData.time, valueColumnX, currentY);
+          currentY += 8;
+          
+          // Photo Section - MOVED DOWN
+          const photoStartY = margin + 22;
+          
+          const photoBoxX = rightSectionStart;
+          const photoBoxWidth = rightSectionWidth - 8;
+          const photoBoxHeight = 40;
+          
+          doc.setDrawColor(0, 0, 0);
+          doc.setLineWidth(0.5);
+          doc.rect(photoBoxX, photoStartY, photoBoxWidth, photoBoxHeight);
+          
+          if (formData.photo && formData.photo !== '') {
+            try {
+              doc.addImage(formData.photo, 'JPEG', 
+                           photoBoxX + 2, photoStartY + 2, 
+                           photoBoxWidth - 4, photoBoxHeight - 4);
+            } catch (error) {
+              doc.setFontSize(8);
+              doc.setTextColor(150, 150, 150);
+              doc.text('Visitor Photo', photoBoxX + photoBoxWidth/2, photoStartY + photoBoxHeight/2, { align: 'center' });
+            }
+          } else {
+            doc.setFontSize(8);
+            doc.setTextColor(150, 150, 150);
+            doc.text('No Photo', photoBoxX + photoBoxWidth/2, photoStartY + photoBoxHeight/2, { align: 'center' });
+          }
+          
+          doc.setTextColor(0, 0, 0);
+          doc.setFontSize(7);
+          doc.setFont('helvetica', 'bold');
+          const photoLabelY = photoStartY + photoBoxHeight + 4;
+          doc.text('VISITOR PHOTO', photoBoxX + photoBoxWidth/2, photoLabelY, { align: 'center' });
+          
+          // Signatures
+          const signatureStartY = Math.max(currentY, photoLabelY + 8);
+          const signatureBoxWidth = contentWidth / 3;
+          
+          // Visitor Signature
+          doc.setFontSize(7);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Visitor Signature:', margin + signatureBoxWidth/2, signatureStartY, { align: 'center' });
+          doc.line(margin + 5, signatureStartY + 8, margin + signatureBoxWidth - 5, signatureStartY + 8);
+          
+          // Host Signature
+          const hostSigX = margin + signatureBoxWidth;
+          doc.text('Host Signature:', hostSigX + signatureBoxWidth/2, signatureStartY, { align: 'center' });
+          doc.line(hostSigX + 5, signatureStartY + 8, hostSigX + signatureBoxWidth - 5, signatureStartY + 8);
+          
+          // Security Signature
+          const securitySigX = margin + (signatureBoxWidth * 2);
+          doc.text('Security Signature:', securitySigX + signatureBoxWidth/2, signatureStartY, { align: 'center' });
+          doc.line(securitySigX + 5, signatureStartY + 8, securitySigX + signatureBoxWidth - 5, signatureStartY + 8);
+          
+          // Disclaimer
+          const disclaimerY = pageHeight - 6;
+          doc.setFontSize(5.5);
+          doc.setTextColor(100, 100, 100);
+          doc.text('This pass is valid only for the mentioned date and time.', pageWidth/2, disclaimerY, { align: 'center' });
+          
+          // Save with correct ID
+          doc.save(`Visitor_Pass_${resultData.visitorId}.pdf`);
+          
+          resolve();
+          
         } catch (error) {
-          console.error('Error adding photo:', error);
-          doc.setFontSize(8);
-          doc.setTextColor(150, 150, 150);
-          doc.text('Visitor Photo', photoBoxX + photoBoxWidth/2, photoStartY + photoBoxHeight/2, { align: 'center' });
+          console.error('Error generating PDF:', error);
+          resolve();
         }
-      } else {
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text('No Photo', photoBoxX + photoBoxWidth/2, photoStartY + photoBoxHeight/2, { align: 'center' });
-      }
-      
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'bold');
-      const photoLabelY = photoStartY + photoBoxHeight + 4;
-      doc.text('VISITOR PHOTO', photoBoxX + photoBoxWidth/2, photoLabelY, { align: 'center' });
-      
-      // ============================================
-      // SIGNATURE SECTION
-      // ============================================
-      const signatureStartY = Math.max(currentY, photoLabelY + 8);
-      const totalSignatureWidth = contentWidth;
-      const signatureBoxWidth = totalSignatureWidth / 3;
-      
-      // Visitor Signature (Left)
-      const visitorSigX = margin;
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Visitor Signature:', visitorSigX + signatureBoxWidth/2, signatureStartY, { align: 'center' });
-      doc.setFont('helvetica', 'normal');
-      doc.line(visitorSigX + 5, signatureStartY + 8, visitorSigX + signatureBoxWidth - 5, signatureStartY + 8);
-      
-      // Host Signature (Middle)
-      const hostSigX = margin + signatureBoxWidth;
-      doc.setFont('helvetica', 'bold');
-      doc.text('Host Signature:', hostSigX + signatureBoxWidth/2, signatureStartY, { align: 'center' });
-      doc.setFont('helvetica', 'normal');
-      doc.line(hostSigX + 5, signatureStartY + 8, hostSigX + signatureBoxWidth - 5, signatureStartY + 8);
-      
-      // Security Signature (Right)
-      const securitySigX = margin + (signatureBoxWidth * 2);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Security Signature:', securitySigX + signatureBoxWidth/2, signatureStartY, { align: 'center' });
-      doc.setFont('helvetica', 'normal');
-      doc.line(securitySigX + 5, signatureStartY + 8, securitySigX + signatureBoxWidth - 5, signatureStartY + 8);
-      
-      // Disclaimer
-      const disclaimerY = pageHeight - 6;
-      doc.setFontSize(5.5);
-      doc.setTextColor(100, 100, 100);
-      doc.text('This pass is valid only for the mentioned date and time.', pageWidth/2, disclaimerY, { align: 'center' });
-      doc.text('Please return at reception before leaving.', pageWidth/2, disclaimerY - 3.5, { align: 'center' });
-      
-      // Save and Download - Use the actual visitor ID in filename too
-      const fileName = `Visitor_Pass_${actualVisitorId}.pdf`;
-      doc.save(fileName);
-      
-      resolve();
-      
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      resolve();
+      });
     }
-  });
-}
+    
     // ================================================
     // UTILITY FUNCTIONS
     // ================================================
@@ -1097,8 +1107,7 @@ async function generateAndDownloadPDF(formData, resultData) {
       document.getElementById('message').style.display = 'none';
       document.getElementById('visitorName').focus();
       
-      // Update visitor ID
-      setDefaultVisitorId();
+      loadSystemStats();
     }
     
     // Keyboard shortcuts
@@ -1116,5 +1125,4 @@ async function generateAndDownloadPDF(formData, resultData) {
     });
   </script>
 </body>
-
 </html>
