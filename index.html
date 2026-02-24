@@ -12,7 +12,6 @@
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* Your existing CSS remains exactly the same */
     * {
       margin: 0;
       padding: 0;
@@ -361,11 +360,6 @@
       font-size: 11px;
       margin-top: 5px;
     }
-    
-    /* Hidden iframe for form submission */
-    #hiddenFrame {
-      display: none;
-    }
   </style>
 </head>
 <body>
@@ -397,138 +391,125 @@
         </div>
       </div>
       
-      <!-- Hidden iframe for submission -->
-      <iframe id="hiddenFrame" name="hiddenFrame" style="display:none;"></iframe>
+      <div class="form-grid">
+        <!-- Form Fields -->
+        <div class="form-group">
+          <label for="visitorName" class="required"><i class="fas fa-user"></i> Visitor Name</label>
+          <input type="text" id="visitorName" required placeholder="Enter full name">
+        </div>
+        
+        <div class="form-group">
+          <label for="companyName" class="required"><i class="fas fa-building"></i> Company Name</label>
+          <input type="text" id="companyName" required placeholder="Enter company name">
+        </div>
+        
+        <div class="form-group">
+          <label for="contactNumber" class="required"><i class="fas fa-phone"></i> Contact Number</label>
+          <input type="tel" id="contactNumber" required placeholder="10-digit mobile number">
+        </div>
+        
+        <div class="form-group">
+          <label for="personToMeet" class="required"><i class="fas fa-handshake"></i> Person to Meet</label>
+          <input type="text" id="personToMeet" required placeholder="Name of person">
+        </div>
+        
+        <div class="form-group full-width">
+          <label for="visitorAddress"><i class="fas fa-map-marker-alt"></i> Visitor Address (Optional)</label>
+          <textarea id="visitorAddress" rows="2" placeholder="Enter visitor's address"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="areaToVisit" class="required"><i class="fas fa-map-signs"></i> Area to Visit</label>
+          <select id="areaToVisit" required>
+            <option value="">Select area</option>
+            <option value="Office">Office</option>
+            <option value="Production Area">Production Area</option>
+            <option value="Office/Production Area">Office/Production Area</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="purpose" class="required"><i class="fas fa-bullseye"></i> Purpose of Visit</label>
+          <select id="purpose" required>
+            <option value="">Select purpose</option>
+            <option value="Business Meeting">Business Meeting</option>
+            <option value="Delivery">Delivery</option>
+            <option value="Interview">Interview</option>
+            <option value="Service/Maintenance">Service/Maintenance</option>
+            <option value="Client Meeting">Client Meeting</option>
+            <option value="Training">Training</option>
+            <option value="Official Work">Official Work</option>
+            <option value="Vendor Meeting">Vendor Meeting</option>
+            <option value="Personal Meeting">Personal Meeting</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        
+        <div class="form-group full-width" id="otherPurposeGroup" style="display:none;">
+          <label for="purposeDetails"><i class="fas fa-edit"></i> Please specify purpose</label>
+          <textarea id="purposeDetails" rows="2" placeholder="Enter purpose details"></textarea>
+        </div>
+        
+        <!-- Photo Section -->
+        <div class="form-group full-width">
+          <div class="photo-section">
+            <div class="photo-preview-container">
+              <div id="photoPlaceholder" class="photo-placeholder">
+                <i class="fas fa-camera"></i>
+                <span>No photo captured</span>
+              </div>
+              <img id="photoPreview" alt="Visitor Photo">
+            </div>
+            
+            <div class="camera-buttons">
+              <button type="button" class="camera-btn btn-primary" onclick="openCamera()">
+                <i class="fas fa-camera"></i> Take Photo
+              </button>
+              <button type="button" class="camera-btn btn-secondary" onclick="uploadPhoto()">
+                <i class="fas fa-upload"></i> Upload Photo
+              </button>
+              <button type="button" class="camera-btn btn-danger" onclick="clearPhoto()" style="display:none;" id="clearPhotoBtn">
+                <i class="fas fa-trash"></i> Clear Photo
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
       
-      <!-- Main Form - This will submit directly to Apps Script -->
-      <form id="visitorForm" method="POST" action="https://script.google.com/macros/s/AKfycbxaq-JRSudrABpbEC-ez2y6eD92Pc8qfAz7ol6KL414NZjnyMZAw0H1924LffrGOpcu/exec" target="hiddenFrame">
-        
-        <div class="form-grid">
-          <!-- Form Fields -->
-          <div class="form-group">
-            <label for="visitorName" class="required"><i class="fas fa-user"></i> Visitor Name</label>
-            <input type="text" id="visitorName" name="visitorName" required placeholder="Enter full name">
+      <!-- Hidden file input -->
+      <input type="file" id="photoInput" accept="image/*" style="display:none;">
+      
+      <!-- Camera Modal -->
+      <div class="camera-modal" id="cameraModal">
+        <div class="camera-container">
+          <div class="camera-header" style="background:#2c3e50;color:white;padding:15px;display:flex;justify-content:space-between;">
+            <span><i class="fas fa-camera"></i> Take Photo</span>
+            <button onclick="closeCamera()" style="background:none;border:none;color:white;cursor:pointer;font-size:20px;">
+              <i class="fas fa-times"></i>
+            </button>
           </div>
-          
-          <div class="form-group">
-            <label for="companyName" class="required"><i class="fas fa-building"></i> Company Name</label>
-            <input type="text" id="companyName" name="companyName" required placeholder="Enter company name">
-          </div>
-          
-          <div class="form-group">
-            <label for="contactNumber" class="required"><i class="fas fa-phone"></i> Contact Number</label>
-            <input type="tel" id="contactNumber" name="contactNumber" required placeholder="10-digit mobile number">
-          </div>
-          
-          <div class="form-group">
-            <label for="personToMeet" class="required"><i class="fas fa-handshake"></i> Person to Meet</label>
-            <input type="text" id="personToMeet" name="personToMeet" required placeholder="Name of person">
-          </div>
-          
-          <div class="form-group full-width">
-            <label for="visitorAddress"><i class="fas fa-map-marker-alt"></i> Visitor Address (Optional)</label>
-            <textarea id="visitorAddress" name="visitorAddress" rows="2" placeholder="Enter visitor's address"></textarea>
-          </div>
-          
-          <div class="form-group">
-            <label for="areaToVisit" class="required"><i class="fas fa-map-signs"></i> Area to Visit</label>
-            <select id="areaToVisit" name="areaToVisit" required>
-              <option value="">Select area</option>
-              <option value="Office">Office</option>
-              <option value="Production Area">Production Area</option>
-              <option value="Office/Production Area">Office/Production Area</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label for="purpose" class="required"><i class="fas fa-bullseye"></i> Purpose of Visit</label>
-            <select id="purpose" name="purpose" required>
-              <option value="">Select purpose</option>
-              <option value="Business Meeting">Business Meeting</option>
-              <option value="Delivery">Delivery</option>
-              <option value="Interview">Interview</option>
-              <option value="Service/Maintenance">Service/Maintenance</option>
-              <option value="Client Meeting">Client Meeting</option>
-              <option value="Training">Training</option>
-              <option value="Official Work">Official Work</option>
-              <option value="Vendor Meeting">Vendor Meeting</option>
-              <option value="Personal Meeting">Personal Meeting</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          
-          <div class="form-group full-width" id="otherPurposeGroup" style="display:none;">
-            <label for="purposeDetails"><i class="fas fa-edit"></i> Please specify purpose</label>
-            <textarea id="purposeDetails" name="purposeDetails" rows="2" placeholder="Enter purpose details"></textarea>
-          </div>
-          
-          <!-- Hidden field for photo data -->
-          <input type="hidden" id="photoData" name="photo">
-          
-          <!-- Hidden field for action -->
-          <input type="hidden" name="action" value="processForm">
-          
-          <!-- Photo Section -->
-          <div class="form-group full-width">
-            <div class="photo-section">
-              <div class="photo-preview-container">
-                <div id="photoPlaceholder" class="photo-placeholder">
-                  <i class="fas fa-camera"></i>
-                  <span>No photo captured</span>
-                </div>
-                <img id="photoPreview" alt="Visitor Photo">
-              </div>
-              
-              <div class="camera-buttons">
-                <button type="button" class="camera-btn btn-primary" onclick="openCamera()">
-                  <i class="fas fa-camera"></i> Take Photo
-                </button>
-                <button type="button" class="camera-btn btn-secondary" onclick="uploadPhoto()">
-                  <i class="fas fa-upload"></i> Upload Photo
-                </button>
-                <button type="button" class="camera-btn btn-danger" onclick="clearPhoto()" style="display:none;" id="clearPhotoBtn">
-                  <i class="fas fa-trash"></i> Clear Photo
-                </button>
-              </div>
-            </div>
+          <video id="cameraView" autoplay playsinline style="width:100%;height:400px;background:#000;"></video>
+          <div class="camera-controls" style="padding:15px;background:#f8f9fa;display:flex;gap:10px;justify-content:center;">
+            <button class="camera-btn btn-primary" onclick="capturePhoto()">
+              <i class="fas fa-camera"></i> Capture
+            </button>
+            <button class="camera-btn btn-danger" onclick="closeCamera()">
+              <i class="fas fa-times"></i> Cancel
+            </button>
           </div>
         </div>
-        
-        <!-- Hidden file input -->
-        <input type="file" id="photoInput" accept="image/*" style="display:none;">
-        
-        <!-- Camera Modal -->
-        <div class="camera-modal" id="cameraModal">
-          <div class="camera-container">
-            <div class="camera-header" style="background:#2c3e50;color:white;padding:15px;display:flex;justify-content:space-between;">
-              <span><i class="fas fa-camera"></i> Take Photo</span>
-              <button type="button" onclick="closeCamera()" style="background:none;border:none;color:white;cursor:pointer;font-size:20px;">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-            <video id="cameraView" autoplay playsinline style="width:100%;height:400px;background:#000;"></video>
-            <div class="camera-controls" style="padding:15px;background:#f8f9fa;display:flex;gap:10px;justify-content:center;">
-              <button type="button" class="camera-btn btn-primary" onclick="capturePhoto()">
-                <i class="fas fa-camera"></i> Capture
-              </button>
-              <button type="button" class="camera-btn btn-danger" onclick="closeCamera()">
-                <i class="fas fa-times"></i> Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Loading Indicator -->
-        <div class="loading" id="loading">
-          <div class="spinner"></div>
-          <p>Processing and generating PDF...</p>
-        </div>
-        
-        <!-- Submit Button -->
-        <button type="button" class="submit-btn" onclick="prepareAndSubmitForm()" id="submitBtn">
-          <i class="fas fa-file-pdf"></i> GENERATE & DOWNLOAD VISITOR PASS
-        </button>
-      </form>
+      </div>
+      
+      <!-- Loading Indicator -->
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Processing and generating PDF...</p>
+      </div>
+      
+      <!-- Submit Button -->
+      <button class="submit-btn" onclick="submitForm()" id="submitBtn">
+        <i class="fas fa-file-pdf"></i> GENERATE & DOWNLOAD VISITOR PASS
+      </button>
       
       <!-- Message Display -->
       <div class="message" id="message"></div>
@@ -537,7 +518,7 @@
   
   <script>
     // ================================================
-    // CONFIGURATION
+    // CONFIGURATION - UPDATE THIS WITH YOUR APPS SCRIPT URL
     // ================================================
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxaq-JRSudrABpbEC-ez2y6eD92Pc8qfAz7ol6KL414NZjnyMZAw0H1924LffrGOpcu/exec';
     
@@ -545,7 +526,6 @@
     let photoBase64 = '';
     let cameraStream = null;
     let currentPurpose = '';
-    let currentVisitorId = '';
     const { jsPDF } = window.jspdf;
     
     // ================================================
@@ -554,21 +534,12 @@
     document.addEventListener('DOMContentLoaded', function() {
       console.log('Page loaded');
       
-      // Load stats using simple fetch (will work for GET)
       loadSystemStats();
       
       // Purpose dropdown handler
       document.getElementById('purpose').addEventListener('change', function() {
         const otherGroup = document.getElementById('otherPurposeGroup');
-        const purposeDetails = document.getElementById('purposeDetails');
-        
-        if (this.value === 'Other') {
-          otherGroup.style.display = 'block';
-          purposeDetails.required = true;
-        } else {
-          otherGroup.style.display = 'none';
-          purposeDetails.required = false;
-        }
+        otherGroup.style.display = this.value === 'Other' ? 'block' : 'none';
       });
       
       // Phone validation
@@ -581,14 +552,17 @@
     });
     
     // ================================================
-    // LOAD STATS
+    // API CALLS
     // ================================================
     
     async function loadSystemStats() {
       try {
         const response = await fetch(`${APPS_SCRIPT_URL}?action=checkSystemStatus`, {
           method: 'GET',
-          mode: 'cors'
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'text/plain',
+          }
         });
         
         if (response.ok) {
@@ -597,10 +571,9 @@
           
           if (result.success) {
             document.getElementById('nextVisitorId').textContent = result.nextVisitorId;
-            document.getElementById('todayCount').textContent = result.todayStats?.totalToday || 0;
-            document.getElementById('totalCount').textContent = result.sheetRows || 0;
-            document.getElementById('activeCount').textContent = result.activeCount || 0;
-            currentVisitorId = result.nextVisitorId;
+            document.getElementById('todayCount').textContent = result.todayStats.totalToday;
+            document.getElementById('totalCount').textContent = result.sheetRows;
+            document.getElementById('activeCount').textContent = result.activeCount;
           } else {
             setDefaultVisitorId();
           }
@@ -620,36 +593,18 @@
       const yy = String(today.getFullYear()).slice(2);
       const defaultId = 'GD' + dd + mm + yy + '001';
       document.getElementById('nextVisitorId').textContent = defaultId;
-      currentVisitorId = defaultId;
     }
     
-    // ================================================
-    // PREPARE AND SUBMIT FORM
-    // ================================================
-    
-    async function prepareAndSubmitForm() {
-      // Validate form
-      if (!validateForm()) {
+    async function submitForm() {
+      const validation = validateForm();
+      
+      if (!validation.isValid) {
+        const errorMessage = validation.errors.join('<br>');
+        showMessage(`<i class="fas fa-exclamation-circle"></i> Please fix the following errors:<br>${errorMessage}`, 'error');
         return;
       }
       
-      // Set purpose
-      const purpose = document.getElementById('purpose').value;
-      if (purpose === 'Other') {
-        currentPurpose = document.getElementById('purposeDetails').value.trim() || 'Other';
-      } else {
-        currentPurpose = purpose;
-      }
-      
-      // Set photo data in hidden field
-      document.getElementById('photoData').value = photoBase64;
-      
-      // Show loading
-      document.getElementById('submitBtn').disabled = true;
-      document.getElementById('loading').style.display = 'block';
-      document.getElementById('message').style.display = 'none';
-      
-      // Get form data for PDF
+      // Prepare form data
       const formData = {
         visitorName: document.getElementById('visitorName').value.trim(),
         companyName: document.getElementById('companyName').value.trim(),
@@ -661,104 +616,73 @@
         photo: photoBase64
       };
       
-      // Get visitor ID
-      const visitorId = document.getElementById('nextVisitorId').textContent;
+      // Show loading
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('message').style.display = 'none';
       
-      // Submit the form to Apps Script (this will bypass CORS)
-      document.getElementById('visitorForm').submit();
-      
-      // Generate PDF immediately with current data
-      const now = new Date();
-      const dateStr = now.toLocaleDateString('en-GB');
-      const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-      
-      await generateAndDownloadPDF(formData, {
-        visitorId: visitorId,
-        date: dateStr,
-        time: timeStr
-      });
-      
-      // Show success message
-      showMessage(`
-        <div style="text-align:center;">
-          <h3 style="color:#27ae60;">✓ Visitor Pass Created Successfully!</h3>
-          <div style="background:#e8f4fd; padding:15px; margin:15px 0;">
-            <div style="font-size:14px;">Visitor ID</div>
-            <div style="font-size:28px; font-weight:bold;">${visitorId}</div>
-            <div>${formData.visitorName} | ${dateStr} ${timeStr}</div>
-          </div>
-          <p>Data has been saved to Google Sheets.</p>
-          <button onclick="clearForm()" style="background:#2ecc71;color:white;padding:12px 30px;border:none;border-radius:5px;cursor:pointer;margin-top:15px;">
-            Create Another Pass
-          </button>
-        </div>
-      `, 'success');
-      
-      // Reload stats after 3 seconds
-      setTimeout(loadSystemStats, 3000);
-      
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('submitBtn').disabled = false;
-    }
-    
-    // ================================================
-    // VALIDATION
-    // ================================================
-    
-    function validateForm() {
-      let isValid = true;
-      const errors = [];
-      
-      const requiredFields = [
-        { id: 'visitorName', name: 'Visitor Name' },
-        { id: 'companyName', name: 'Company Name' },
-        { id: 'contactNumber', name: 'Contact Number' },
-        { id: 'personToMeet', name: 'Person to Meet' },
-        { id: 'areaToVisit', name: 'Area to Visit' },
-        { id: 'purpose', name: 'Purpose' }
-      ];
-      
-      requiredFields.forEach(field => {
-        const element = document.getElementById(field.id);
-        const value = element.value.trim();
+      try {
+        // Send to Apps Script using no-cors mode to avoid preflight
+        await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8',
+          },
+          body: JSON.stringify(formData)
+        });
         
-        if (!value) {
-          isValid = false;
-          element.classList.add('error-field');
-          errors.push(`${field.name} is required`);
-        } else {
-          element.classList.remove('error-field');
-        }
-      });
-      
-      // Check Other purpose details if needed
-      const purpose = document.getElementById('purpose').value;
-      if (purpose === 'Other') {
-        const details = document.getElementById('purposeDetails').value.trim();
-        if (!details) {
-          isValid = false;
-          document.getElementById('purposeDetails').classList.add('error-field');
-          errors.push('Please specify purpose details');
-        }
+        // Generate visitor ID locally
+        const visitorId = generateLocalVisitorId();
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
+        const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        
+        // Generate PDF with local data
+        await generateAndDownloadPDF(formData, {
+          visitorId: visitorId,
+          date: dateStr,
+          time: timeStr,
+          photoDriveUrl: ''
+        });
+        
+        showMessage(`
+          <div style="text-align:center;">
+            <h3 style="color:#27ae60;">✓ Visitor Pass Created Successfully!</h3>
+            <div style="background:#e8f4fd; padding:15px; margin:15px 0;">
+              <div style="font-size:14px;">Visitor ID</div>
+              <div style="font-size:28px; font-weight:bold;">${visitorId}</div>
+              <div>${formData.visitorName} | ${dateStr} ${timeStr}</div>
+            </div>
+            <p>Data will appear in Google Sheets shortly.</p>
+            <button onclick="clearForm()" style="background:#2ecc71;color:white;padding:12px 30px;border:none;border-radius:5px;cursor:pointer;margin-top:15px;">
+              Create Another Pass
+            </button>
+          </div>
+        `, 'success');
+        
+        // Update stats
+        document.getElementById('nextVisitorId').textContent = generateLocalVisitorId();
+        
+      } catch (error) {
+        console.error('Submission error:', error);
+        showMessage('Connection error. Please try again. Your data will be saved when connection is restored.', 'error');
+      } finally {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('submitBtn').disabled = false;
       }
-      
-      const phone = document.getElementById('contactNumber').value.trim();
-      if (phone && !/^[0-9]{10}$/.test(phone)) {
-        document.getElementById('contactNumber').classList.add('error-field');
-        isValid = false;
-        errors.push('Contact number must be exactly 10 digits');
-      }
-      
-      if (!isValid) {
-        const errorMessage = errors.join('<br>');
-        showMessage(`<i class="fas fa-exclamation-circle"></i> Please fix the following errors:<br>${errorMessage}`, 'error');
-      }
-      
-      return isValid;
+    }
+    
+    function generateLocalVisitorId() {
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, '0');
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const yy = String(now.getFullYear()).slice(2);
+      return 'GD' + dd + mm + yy + '001';
     }
     
     // ================================================
-    // CAMERA FUNCTIONS (unchanged)
+    // CAMERA FUNCTIONS
     // ================================================
     
     async function openCamera() {
@@ -864,214 +788,283 @@
       placeholder.style.display = 'flex';
       clearBtn.style.display = 'none';
       photoBase64 = '';
-      document.getElementById('photoData').value = '';
     }
     
     // ================================================
-    // PDF GENERATION (your existing function)
+    // FORM VALIDATION
     // ================================================
-
-    async function generateAndDownloadPDF(formData, resultData) {
-      return new Promise((resolve) => {
-        try {
-          const doc = new jsPDF({
-            orientation: 'landscape',
-            unit: 'mm',
-            format: [148, 105]
-          });
-          
-          const pageWidth = doc.internal.pageSize.getWidth();
-          const pageHeight = doc.internal.pageSize.getHeight();
-          
-          const margin = 8;
-          const contentWidth = pageWidth - (margin * 2);
-          
-          const leftSectionWidth = contentWidth * 0.58;
-          const rightSectionWidth = contentWidth * 0.42;
-          const rightSectionStart = margin + leftSectionWidth + 5;
-          
-          let currentY = margin + 5;
-          
-          // Border
-          doc.setDrawColor(0, 0, 0);
-          doc.setLineWidth(0.7);
-          doc.rect(4, 4, pageWidth - 13, pageHeight - 8);
-          
-          // Header
-          doc.setFontSize(8.5);
-          doc.setFont('helvetica', 'bold');
-          doc.text('GEM DRYTECH SYSTEMS LLP', margin + leftSectionWidth/2, currentY, { align: 'center' });
-          currentY += 4;
-          
-          doc.setFontSize(10);
-          doc.setTextColor(231, 76, 60);
-          doc.text('VISITOR PASS', margin + leftSectionWidth/2, currentY, { align: 'center' });
-          doc.setTextColor(0, 0, 0);
-          currentY += 6;
-          
-          // Visitor ID
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'bold');
-          doc.text('Visitor ID:', margin + leftSectionWidth/2 - 15, currentY);
-          doc.setTextColor(52, 152, 219);
-          doc.text(resultData.visitorId, margin + leftSectionWidth/2 + 5, currentY);
-          doc.setTextColor(0, 0, 0);
-          currentY += 8;
-          
-          // Separator line
-          doc.setLineWidth(0.3);
-          doc.line(margin, currentY, margin + leftSectionWidth - 6, currentY);
-          currentY += 7;
-          
-          // Visitor Details
-          const leftColumnX = margin + 5;
-          const valueColumnX = leftColumnX + 30;
-          
-          doc.setFontSize(7.5);
-          
-          // Name
-          doc.setFont('helvetica', 'bold');
-          doc.text('Visitor Name:', leftColumnX, currentY);
-          doc.setFont('helvetica', 'normal');
-          doc.text(formData.visitorName.substring(0, 25), valueColumnX, currentY);
-          currentY += 4;
-          
-          // Company
-          doc.setFont('helvetica', 'bold');
-          doc.text('Company:', leftColumnX, currentY);
-          doc.setFont('helvetica', 'normal');
-          doc.text(formData.companyName.substring(0, 25), valueColumnX, currentY);
-          currentY += 4;
-          
-          // Contact
-          doc.setFont('helvetica', 'bold');
-          doc.text('Contact No:', leftColumnX, currentY);
-          doc.setFont('helvetica', 'normal');
-          doc.text(formData.contactNumber, valueColumnX, currentY);
-          currentY += 4;
-          
-          // Address
-          if (formData.visitorAddress) {
-            doc.setFont('helvetica', 'bold');
-            doc.text('Address:', leftColumnX, currentY);
-            doc.setFont('helvetica', 'normal');
-            
-            const maxAddressWidth = leftSectionWidth - 35;
-            const addressLines = doc.splitTextToSize(formData.visitorAddress, maxAddressWidth);
-            doc.text(addressLines.slice(0, 2), valueColumnX, currentY);
-            currentY += (addressLines.slice(0, 2).length * 3.5);
-          }
-          
-          // Person to Meet
-          doc.setFont('helvetica', 'bold');
-          doc.text('Meeting With:', leftColumnX, currentY);
-          doc.setFont('helvetica', 'normal');
-          doc.text(formData.personToMeet.substring(0, 25), valueColumnX, currentY);
-          currentY += 4;
-          
-          // Area
-          doc.setFont('helvetica', 'bold');
-          doc.text('Area to Visit:', leftColumnX, currentY);
-          doc.setFont('helvetica', 'normal');
-          doc.text(formData.areaToVisit.substring(0, 25), valueColumnX, currentY);
-          currentY += 4;
-          
-          // Purpose
-          doc.setFont('helvetica', 'bold');
-          doc.text('Purpose:', leftColumnX, currentY);
-          doc.setFont('helvetica', 'normal');
-          
-          const maxPurposeWidth = leftSectionWidth - 35;
-          const purposeLines = doc.splitTextToSize(formData.purpose, maxPurposeWidth);
-          doc.text(purposeLines.slice(0, 2), valueColumnX, currentY);
-          currentY += (purposeLines.slice(0, 2).length * 3.5);
-          
-          // Date
-          doc.setFont('helvetica', 'bold');
-          doc.text('Date:', leftColumnX, currentY);
-          doc.setFont('helvetica', 'normal');
-          doc.text(resultData.date, valueColumnX, currentY);
-          currentY += 4;
-          
-          // Time
-          doc.setFont('helvetica', 'bold');
-          doc.text('Time:', leftColumnX, currentY);
-          doc.setFont('helvetica', 'normal');
-          doc.text(resultData.time, valueColumnX, currentY);
-          currentY += 8;
-          
-          // Photo Section - MOVED DOWN (changed from 12 to 22)
-          const photoStartY = margin + 22;
-          
-          const photoBoxX = rightSectionStart;
-          const photoBoxWidth = rightSectionWidth - 8;
-          const photoBoxHeight = 40;
-          
-          doc.setDrawColor(0, 0, 0);
-          doc.setLineWidth(0.5);
-          doc.rect(photoBoxX, photoStartY, photoBoxWidth, photoBoxHeight);
-          
-          if (formData.photo && formData.photo !== '') {
-            try {
-              doc.addImage(formData.photo, 'JPEG', 
-                           photoBoxX + 2, photoStartY + 2, 
-                           photoBoxWidth - 4, photoBoxHeight - 4);
-            } catch (error) {
-              doc.setFontSize(8);
-              doc.setTextColor(150, 150, 150);
-              doc.text('Visitor Photo', photoBoxX + photoBoxWidth/2, photoStartY + photoBoxHeight/2, { align: 'center' });
-            }
-          } else {
-            doc.setFontSize(8);
-            doc.setTextColor(150, 150, 150);
-            doc.text('No Photo', photoBoxX + photoBoxWidth/2, photoStartY + photoBoxHeight/2, { align: 'center' });
-          }
-          
-          doc.setTextColor(0, 0, 0);
-          doc.setFontSize(7);
-          doc.setFont('helvetica', 'bold');
-          const photoLabelY = photoStartY + photoBoxHeight + 4;
-          doc.text('VISITOR PHOTO', photoBoxX + photoBoxWidth/2, photoLabelY, { align: 'center' });
-          
-          // Signatures
-          const signatureStartY = Math.max(currentY, photoLabelY + 8);
-          const signatureBoxWidth = contentWidth / 3;
-          
-          // Visitor Signature
-          doc.setFontSize(7);
-          doc.setFont('helvetica', 'bold');
-          doc.text('Visitor Signature:', margin + signatureBoxWidth/2, signatureStartY, { align: 'center' });
-          doc.line(margin + 5, signatureStartY + 8, margin + signatureBoxWidth - 5, signatureStartY + 8);
-          
-          // Host Signature
-          const hostSigX = margin + signatureBoxWidth;
-          doc.text('Host Signature:', hostSigX + signatureBoxWidth/2, signatureStartY, { align: 'center' });
-          doc.line(hostSigX + 5, signatureStartY + 8, hostSigX + signatureBoxWidth - 5, signatureStartY + 8);
-          
-          // Security Signature
-          const securitySigX = margin + (signatureBoxWidth * 2);
-          doc.text('Security Signature:', securitySigX + signatureBoxWidth/2, signatureStartY, { align: 'center' });
-          doc.line(securitySigX + 5, signatureStartY + 8, securitySigX + signatureBoxWidth - 5, signatureStartY + 8);
-          
-          // Disclaimer
-          const disclaimerY = pageHeight - 6;
-          doc.setFontSize(5.5);
-          doc.setTextColor(100, 100, 100);
-          doc.text('This pass is valid only for the mentioned date and time.', pageWidth/2, disclaimerY, { align: 'center' });
-          
-          // Save
-          const fileName = `Visitor_Pass_${resultData.visitorId}.pdf`;
-          doc.save(fileName);
-          
-          resolve();
-          
-        } catch (error) {
-          console.error('Error generating PDF:', error);
-          resolve();
+    
+    function validateForm() {
+      let isValid = true;
+      const errors = [];
+      
+      const requiredFields = [
+        { id: 'visitorName', name: 'Visitor Name' },
+        { id: 'companyName', name: 'Company Name' },
+        { id: 'contactNumber', name: 'Contact Number' },
+        { id: 'personToMeet', name: 'Person to Meet' },
+        { id: 'areaToVisit', name: 'Area to Visit' },
+        { id: 'purpose', name: 'Purpose' }
+      ];
+      
+      requiredFields.forEach(field => {
+        const element = document.getElementById(field.id);
+        const value = element.value.trim();
+        
+        if (!value) {
+          isValid = false;
+          element.classList.add('error-field');
+          errors.push(`${field.name} is required`);
+        } else {
+          element.classList.remove('error-field');
         }
       });
+      
+      const phone = document.getElementById('contactNumber').value.trim();
+      if (phone && !/^[0-9]{10}$/.test(phone)) {
+        document.getElementById('contactNumber').classList.add('error-field');
+        isValid = false;
+        errors.push('Contact number must be exactly 10 digits');
+      }
+      
+      const purpose = document.getElementById('purpose').value;
+      if (purpose === 'Other') {
+        const details = document.getElementById('purposeDetails').value.trim();
+        currentPurpose = details || 'Other';
+      } else {
+        currentPurpose = purpose;
+      }
+      
+      return { isValid, errors };
     }
     
+// ================================================
+// PDF GENERATION - FIXED TO SHOW CORRECT VISITOR ID
+// ================================================
+
+async function generateAndDownloadPDF(formData, resultData) {
+  return new Promise((resolve) => {
+    try {
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: [148, 105]
+      });
+      
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      
+      // Set margins
+      const margin = 8;
+      const contentWidth = pageWidth - (margin * 2);
+      
+      const leftSectionWidth = contentWidth * 0.58;
+      const rightSectionWidth = contentWidth * 0.42;
+      const rightSectionStart = margin + leftSectionWidth + 5;
+      
+      let currentY = margin + 5;
+      
+      // Border
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.7);
+      doc.rect(4, 4, pageWidth - 13, pageHeight - 8);
+      
+      // Header Section
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'bold');
+      doc.text('GEM DRYTECH SYSTEMS LLP', margin + leftSectionWidth/2, currentY, { align: 'center' });
+      currentY += 4;
+      
+      doc.setFontSize(10);
+      doc.setTextColor(231, 76, 60);
+      doc.text('VISITOR PASS', margin + leftSectionWidth/2, currentY, { align: 'center' });
+      doc.setTextColor(0, 0, 0);
+      currentY += 6;
+      
+      // ============================================
+      // FIXED: Use the ACTUAL visitor ID from Google Sheets
+      // ============================================
+      // Get the visitor ID from the display (which now has the real ID from server)
+      const actualVisitorId = document.getElementById('nextVisitorId').textContent;
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Visitor ID:', margin + leftSectionWidth/2 - 15, currentY);
+      doc.setTextColor(52, 152, 219);
+      doc.text(actualVisitorId, margin + leftSectionWidth/2 + 5, currentY);
+      doc.setTextColor(0, 0, 0);
+      currentY += 8;
+      
+      // Separator line
+      doc.setLineWidth(0.3);
+      doc.line(margin, currentY, margin + leftSectionWidth - 6, currentY);
+      currentY += 7;
+      
+      // Left Section: Visitor Details
+      const leftColumnX = margin + 5;
+      const valueColumnX = leftColumnX + 30;
+      
+      doc.setFontSize(7.5);
+      
+      // Visitor Name
+      doc.setFont('helvetica', 'bold');
+      doc.text('Visitor Name:', leftColumnX, currentY);
+      doc.setFont('helvetica', 'normal');
+      doc.text(formData.visitorName.substring(0, 25), valueColumnX, currentY);
+      currentY += 4;
+      
+      // Company Name
+      doc.setFont('helvetica', 'bold');
+      doc.text('Company:', leftColumnX, currentY);
+      doc.setFont('helvetica', 'normal');
+      doc.text(formData.companyName.substring(0, 25), valueColumnX, currentY);
+      currentY += 4;
+      
+      // Contact Number
+      doc.setFont('helvetica', 'bold');
+      doc.text('Contact No:', leftColumnX, currentY);
+      doc.setFont('helvetica', 'normal');
+      doc.text(formData.contactNumber, valueColumnX, currentY);
+      currentY += 4;
+      
+      // Address (if provided)
+      if (formData.visitorAddress) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('Address:', leftColumnX, currentY);
+        doc.setFont('helvetica', 'normal');
+        
+        const maxAddressWidth = leftSectionWidth - 35;
+        const addressLines = doc.splitTextToSize(formData.visitorAddress, maxAddressWidth);
+        
+        const displayLines = addressLines.slice(0, 2);
+        doc.text(displayLines, valueColumnX, currentY);
+        currentY += (displayLines.length * 3.5);
+      }
+      
+      // Person to Meet
+      doc.setFont('helvetica', 'bold');
+      doc.text('Meeting With:', leftColumnX, currentY);
+      doc.setFont('helvetica', 'normal');
+      doc.text(formData.personToMeet.substring(0, 25), valueColumnX, currentY);
+      currentY += 4;
+      
+      // Area to Visit
+      doc.setFont('helvetica', 'bold');
+      doc.text('Area to Visit:', leftColumnX, currentY);
+      doc.setFont('helvetica', 'normal');
+      doc.text(formData.areaToVisit.substring(0, 25), valueColumnX, currentY);
+      currentY += 4;
+      
+      // Purpose
+      doc.setFont('helvetica', 'bold');
+      doc.text('Purpose:', leftColumnX, currentY);
+      doc.setFont('helvetica', 'normal');
+      
+      const maxPurposeWidth = leftSectionWidth - 35;
+      const purposeLines = doc.splitTextToSize(formData.purpose, maxPurposeWidth);
+      
+      const purposeDisplayLines = purposeLines.slice(0, 2);
+      doc.text(purposeDisplayLines, valueColumnX, currentY);
+      currentY += (purposeDisplayLines.length * 3.5);
+      
+      // Date
+      doc.setFont('helvetica', 'bold');
+      doc.text('Date:', leftColumnX, currentY);
+      doc.setFont('helvetica', 'normal');
+      doc.text(resultData.date, valueColumnX, currentY);
+      currentY += 4;
+      
+      // Time
+      doc.setFont('helvetica', 'bold');
+      doc.text('Time:', leftColumnX, currentY);
+      doc.setFont('helvetica', 'normal');
+      doc.text(resultData.time, valueColumnX, currentY);
+      currentY += 8;
+      
+      // ============================================
+      // PHOTO SECTION
+      // ============================================
+      const photoStartY = margin + 22;  // MOVED DOWN FROM 12 TO 22
+      
+      const photoBoxX = rightSectionStart;
+      const photoBoxWidth = rightSectionWidth - 8;
+      const photoBoxHeight = 40;
+      
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.5);
+      doc.rect(photoBoxX, photoStartY, photoBoxWidth, photoBoxHeight);
+      
+      if (formData.photo && formData.photo !== '') {
+        try {
+          doc.addImage(formData.photo, 'JPEG', 
+                       photoBoxX + 2, photoStartY + 2, 
+                       photoBoxWidth - 4, photoBoxHeight - 4);
+        } catch (error) {
+          console.error('Error adding photo:', error);
+          doc.setFontSize(8);
+          doc.setTextColor(150, 150, 150);
+          doc.text('Visitor Photo', photoBoxX + photoBoxWidth/2, photoStartY + photoBoxHeight/2, { align: 'center' });
+        }
+      } else {
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text('No Photo', photoBoxX + photoBoxWidth/2, photoStartY + photoBoxHeight/2, { align: 'center' });
+      }
+      
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      const photoLabelY = photoStartY + photoBoxHeight + 4;
+      doc.text('VISITOR PHOTO', photoBoxX + photoBoxWidth/2, photoLabelY, { align: 'center' });
+      
+      // ============================================
+      // SIGNATURE SECTION
+      // ============================================
+      const signatureStartY = Math.max(currentY, photoLabelY + 8);
+      const totalSignatureWidth = contentWidth;
+      const signatureBoxWidth = totalSignatureWidth / 3;
+      
+      // Visitor Signature (Left)
+      const visitorSigX = margin;
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Visitor Signature:', visitorSigX + signatureBoxWidth/2, signatureStartY, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.line(visitorSigX + 5, signatureStartY + 8, visitorSigX + signatureBoxWidth - 5, signatureStartY + 8);
+      
+      // Host Signature (Middle)
+      const hostSigX = margin + signatureBoxWidth;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Host Signature:', hostSigX + signatureBoxWidth/2, signatureStartY, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.line(hostSigX + 5, signatureStartY + 8, hostSigX + signatureBoxWidth - 5, signatureStartY + 8);
+      
+      // Security Signature (Right)
+      const securitySigX = margin + (signatureBoxWidth * 2);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Security Signature:', securitySigX + signatureBoxWidth/2, signatureStartY, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.line(securitySigX + 5, signatureStartY + 8, securitySigX + signatureBoxWidth - 5, signatureStartY + 8);
+      
+      // Disclaimer
+      const disclaimerY = pageHeight - 6;
+      doc.setFontSize(5.5);
+      doc.setTextColor(100, 100, 100);
+      doc.text('This pass is valid only for the mentioned date and time.', pageWidth/2, disclaimerY, { align: 'center' });
+      doc.text('Please return at reception before leaving.', pageWidth/2, disclaimerY - 3.5, { align: 'center' });
+      
+      // Save and Download - Use the actual visitor ID in filename too
+      const fileName = `Visitor_Pass_${actualVisitorId}.pdf`;
+      doc.save(fileName);
+      
+      resolve();
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      resolve();
+    }
+  });
+}
     // ================================================
     // UTILITY FUNCTIONS
     // ================================================
@@ -1085,25 +1078,34 @@
     }
     
     function clearForm() {
-      document.getElementById('visitorForm').reset();
+      document.getElementById('visitorName').value = '';
+      document.getElementById('companyName').value = '';
+      document.getElementById('contactNumber').value = '';
+      document.getElementById('visitorAddress').value = '';
+      document.getElementById('personToMeet').value = '';
+      document.getElementById('areaToVisit').value = '';
+      document.getElementById('purpose').value = '';
+      document.getElementById('purposeDetails').value = '';
+      document.getElementById('otherPurposeGroup').style.display = 'none';
+      
       clearPhoto();
       
       document.querySelectorAll('.error-field').forEach(field => {
         field.classList.remove('error-field');
       });
       
-      document.getElementById('otherPurposeGroup').style.display = 'none';
       document.getElementById('message').style.display = 'none';
       document.getElementById('visitorName').focus();
       
-      loadSystemStats();
+      // Update visitor ID
+      setDefaultVisitorId();
     }
     
     // Keyboard shortcuts
     document.addEventListener('keydown', function(event) {
       if (event.ctrlKey && event.key === 'Enter') {
         event.preventDefault();
-        prepareAndSubmitForm();
+        submitForm();
       }
       if (event.key === 'Escape') {
         event.preventDefault();
@@ -1114,4 +1116,5 @@
     });
   </script>
 </body>
+
 </html>
